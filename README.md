@@ -84,7 +84,10 @@ WinThor (anos 2027 a 3170).
 
 ## Publicação
 
-**Ainda não publicado** (projeto grande: o Júlio vê antes). Quando for: repositório `CONTAS-PAGAR-RECEBER`,
-projeto Vercel `contas-pagar-receber` (Root `web`, `gru1`), Sentinela antes do primeiro deploy (o
-`middleware.ts` já está fechado para `contas-pagar-receber`), Guardião e as variáveis `SUPABASE_DB_*` (a senha,
-o Júlio cadastra).
+**No ar desde 2026-11-09** em **https://contas-pagar-receber.vercel.app** (projeto Vercel `contas-pagar-receber`, Root
+`web`, `gru1`, Node 22), com o código deste repositório (público, **sem valores**: a história com os números ficou
+na máquina). **Fechado pela Sentinela** (registrada antes do 1º deploy; sem login, tudo 403), regra "só na rede da
+Lube" em observar, vigiado pelo Guardião. Cartão **ativo** no portal, categoria **CONTROLADORIA**; por enquanto só o
+administrador abre (as outras contas com "Todos os sistemas" têm a exceção deste sistema). A senha do banco
+(`SUPABASE_DB_PASSWORD`, Sensitive, Production) quem cadastra na Vercel é o Júlio; sem ela as funções respondem
+"configuração incompleta".
