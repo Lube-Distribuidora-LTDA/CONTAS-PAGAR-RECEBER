@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark light">
+<title>Contas a Pagar e Receber — Lube Distribuidora</title>
+<link rel="icon" href="logo-lube-mini.png">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/contas.css">
+<script>try { var t = localStorage.getItem("cpr-tema"); if (t) document.documentElement.setAttribute("data-tema", t); } catch (e) {}</script>
+</head>
+<body>
+<div id="app">
+  <aside id="menu" aria-label="Menu">
+    <div class="marca">
+      <img class="logo" src="logo-lube.png" alt="Lube Distribuidora">
+      <div class="nome">Contas a Pagar e Receber<small>Rotinas 717 · 1240</small></div>
+    </div>
+    <nav id="menu-itens"></nav>
+    <div class="menu-rodape" id="menu-rodape"></div>
+  </aside>
+  <div id="coluna">
+    <header id="topo">
+      <button class="btn-ic btn-menu" id="btn-menu" aria-label="Abrir menu" title="Menu"></button>
+      <div class="tit"><div class="olho" id="olho">Rotina 717 · Contas a Pagar</div><h1 id="titulo">Contas a Pagar</h1></div>
+      <label class="busca-global" id="busca-box">
+        <span id="ic-busca"></span>
+        <input id="busca-global" type="search" placeholder="Buscar…" autocomplete="off" spellcheck="false">
+        <kbd>/</kbd>
+      </label>
+      <div class="acoes">
+        <button class="btn-ic" id="btn-tema" title="Tema claro/escuro"></button>
+        <span class="ao-vivo" id="ao-vivo" title=""><i></i><b>…</b></span>
+        <button class="btn-ic" id="btn-atualizar" title="Atualizar: o agente lê o WinThor agora"></button>
+      </div>
+    </header>
+    <div id="faixa-filtros"></div>
+    <main id="conteudo"></main>
+  </div>
+</div>
+<div id="dossie-fundo"></div>
+<aside id="dossie" aria-label="Título"></aside>
+<div id="dica"></div>
+<div id="toasts"></div>
+<script>window.VERSAO = "2026-11-09";</script>
+<script src="planilha.js"></script>
+<script src="js/nucleo.js"></script>
+<script src="js/componentes.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/grade.js"></script>
+<script src="js/rotinas.js"></script>
+<script src="js/titulo.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
