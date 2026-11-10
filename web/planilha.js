@@ -85,12 +85,21 @@ var FONTES = [
   { tam: 9, cor: "FF8A97B0", i: 1 }                               // 9 rodapé
 ];
 var FUNDOS = [null, null, NAVY, "FFF4F7FB", NAVY2, "FFF7E7BE", VERM, "FFF7F9FD", "FFFFFFFF"];
+/* SEM CÉLULA MESCLADA (2026-11-10): o Júlio copiava só algumas colunas (Ctrl+clique) para outra planilha e o Excel dizia
+   "Esta ação não funcionará em várias seleções" — a mesclagem do título, dos filtros e dos cartões atravessava as colunas.
+   As faixas e os cartões agora usam "Centralizar na seleção" (centerContinuous): mesma cara, nenhuma célula mesclada.
+   O cartão desenha a borda só por fora (começo, meio e fim). */
+var CARTAO = "FFD7DEF0";
 var BORDAS = [
   null,
-  { todas: "FFE2E8F0" },                                          // 1 grade suave
-  { todas: "FF2A3F6E", baixo: OURO, espBaixo: "medium" },         // 2 cabeçalho
-  { todas: "FFE2C98A", cima: NAVY, espCima: "double" },           // 3 total
-  { todas: "FFD7DEF0" }                                           // 4 cartão
+  { l: "FFE2E8F0", r: "FFE2E8F0", t: "FFE2E8F0", b: "FFE2E8F0" },                  // 1 grade suave
+  { l: "FF2A3F6E", r: "FF2A3F6E", t: "FF2A3F6E", b: OURO, espB: "medium" },        // 2 cabeçalho
+  { l: "FFE2C98A", r: "FFE2C98A", t: NAVY, espT: "double", b: "FFE2C98A" },        // 3 total (coluna somada)
+  { l: CARTAO, r: CARTAO, t: CARTAO, b: CARTAO },                                  // 4 cartão de uma coluna
+  { l: CARTAO, t: CARTAO, b: CARTAO },                                             // 5 cartão: começo
+  { t: CARTAO, b: CARTAO },                                                        // 6 cartão: meio
+  { r: CARTAO, t: CARTAO, b: CARTAO },                                             // 7 cartão: fim
+  { t: NAVY, espT: "double", b: "FFE2C98A" }                                       // 8 total: a faixa do rótulo, sem linha no meio
 ];
 var FMT = {
   moeda: { id: 164, c: '"R$" #,##0.00;[Red]-"R$" #,##0.00' },
@@ -102,19 +111,22 @@ var FMT = {
   decimal6: { id: 170, c: "#,##0.000000" }
 };
 var TIPOS = ["texto", "moeda", "inteiro", "codigo", "data", "percentual", "decimal", "decimal6"];
-/* [fonte, fundo, borda, formato, quebra] — tudo centralizado (pedido do Júlio) */
-var ESTILOS = [
-  [0, 0, 0, null], [2, 2, 0, null], [3, 2, 0, null], [0, 6, 0, null], [5, 0, 0, null, 1],   // 0 base · 1 título · 2 subtítulo · 3 filete · 4 filtro
-  [6, 0, 0, null],                                                                          // 5 seção
-  [6, 7, 4, null, 1], [7, 7, 4, "moeda"], [7, 7, 4, "inteiro"], [7, 7, 4, null],            // 6 rótulo do cartão · 7–9 valor do cartão
-  [4, 4, 2, null, 1]                                                                        // 10 cabeçalho
-];
-var E_DADO = ESTILOS.length;                                     // 11..26: tipo × (normal, alternada)
-TIPOS.forEach(function (t) { var f = t === "texto" ? null : t; ESTILOS.push([0, 0, 1, f]); ESTILOS.push([0, 3, 1, f]); });
-var E_TOT = ESTILOS.length;                                      // total: texto, moeda, inteiro, decimal
-ESTILOS.push([8, 5, 3, null], [8, 5, 3, "moeda"], [8, 5, 3, "inteiro"], [8, 5, 3, "decimal"]);
-var E_RODAPE = ESTILOS.length; ESTILOS.push([9, 0, 0, null, 1]);
-function eDado(tipo, alt) { var i = TIPOS.indexOf(tipo); if (i < 0) i = 0; return E_DADO + i * 2 + (alt ? 1 : 0); }
+/* [fonte, fundo, borda, formato, quebra, faixa] — tudo centralizado (pedido do Júlio); faixa = centralizar na seleção */
+var ESTILOS = [], IDX = {};
+function est(fonte, fundo, borda, fmt, quebra, faixa) {
+  var k = [fonte, fundo, borda, fmt || "", quebra ? 1 : 0, faixa ? 1 : 0].join("|");
+  if (IDX[k] == null) { IDX[k] = ESTILOS.length; ESTILOS.push([fonte, fundo, borda, fmt || null, quebra ? 1 : 0, faixa ? 1 : 0]); }
+  return IDX[k];
+}
+est(0, 0, 0);                                                    // 0 base (tem que ser o primeiro)
+var S_TIT = est(2, 2, 0, null, 0, 1), S_SUB = est(3, 2, 0, null, 0, 1), S_FILETE = est(0, 6, 0, null, 0, 1);
+var S_FILTRO = est(5, 0, 0, null, 0, 1), S_SECAO = est(6, 0, 0, null, 0, 1), S_LINHA_TOT = est(7, 7, 0, null, 0, 1);
+var S_RODAPE = est(9, 0, 0, null, 0, 1), S_CAB = est(4, 4, 2, null, 1, 0);
+/* cartão: borda pela posição da coluna no cartão (0 só uma coluna, 1 começo, 2 meio, 3 fim) */
+function sCartao(fonte, fmt, pos) { return est(fonte, 7, [4, 5, 6, 7][pos], fmt, 0, 1); }
+function eDado(tipo, alt) { return est(0, alt ? 3 : 0, 1, tipo === "texto" || TIPOS.indexOf(tipo) < 0 ? null : tipo); }
+var S_TOT_ROT = est(8, 5, 8, null, 0, 1);                        // o rótulo do total, centralizado até a 1ª coluna somada
+function sTot(fmt) { return est(8, 5, 3, fmt); }
 
 function xmlEstilos() {
   var nf = Object.keys(FMT).map(function (k) { return '<numFmt numFmtId="' + FMT[k].id + '" formatCode="' + esc(FMT[k].c) + '"/>'; }).join("");
@@ -127,12 +139,12 @@ function xmlEstilos() {
   var bo = BORDAS.map(function (b) {
     if (!b) return "<border><left/><right/><top/><bottom/><diagonal/></border>";
     function lado(n, cor, esp) { return cor ? "<" + n + ' style="' + (esp || "thin") + '"><color rgb="' + cor + '"/></' + n + ">" : "<" + n + "/>"; }
-    return "<border>" + lado("left", b.todas) + lado("right", b.todas) + lado("top", b.cima || b.todas, b.espCima) + lado("bottom", b.baixo || b.todas, b.espBaixo) + "<diagonal/></border>";
+    return "<border>" + lado("left", b.l) + lado("right", b.r) + lado("top", b.t, b.espT) + lado("bottom", b.b, b.espB) + "<diagonal/></border>";
   }).join("");
   var xf = ESTILOS.map(function (e) {
     return '<xf numFmtId="' + (e[3] ? FMT[e[3]].id : 0) + '" fontId="' + e[0] + '" fillId="' + e[1] + '" borderId="' + e[2] +
-      '" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="center" vertical="center"' +
-      (e[4] ? ' wrapText="1"' : "") + "/></xf>";
+      '" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="' +
+      (e[5] ? "centerContinuous" : "center") + '" vertical="center"' + (e[4] ? ' wrapText="1"' : "") + "/></xf>";
   }).join("");
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
     '<numFmts count="' + Object.keys(FMT).length + '">' + nf + "</numFmts>" +
@@ -173,48 +185,49 @@ function carregarLogo() {
 /* ------------------------------ a planilha ------------------------------ */
 function gerar(cfg, logo) {
   var C = cfg.colunas, linhas = cfg.linhas || [], nC = Math.max(C.length, 4), ult = col(nC);
-  var lin = 1, xml = [], merges = [];
+  var lin = 1, xml = [];
   function row(n, alt, cels) { xml.push('<row r="' + n + '"' + (alt ? ' ht="' + alt + '" customHeight="1"' : "") + ">" + cels.join("") + "</row>"); }
+  /* faixa de lado a lado: o texto na 1ª célula, as outras vazias com o mesmo estilo (centralizar na seleção, sem mesclar) */
   function faixa(n, alt, estilo, texto) {
     var cs = []; for (var c = 1; c <= nC; c++) cs.push(cel(col(c) + n, estilo, c === 1 ? texto : ""));
-    row(n, alt, cs); merges.push("A" + n + ":" + ult + n);
+    row(n, alt, cs);
   }
 
   /* faixa da Lube */
-  faixa(lin++, 36, 1, cfg.titulo || "Relatório");
-  faixa(lin++, 22, 2, "LUBE DISTRIBUIDORA LTDA" + (cfg.subtitulo ? "  ·  " + cfg.subtitulo : "") + "  ·  gerado em " + new Date().toLocaleString("pt-BR"));
-  faixa(lin++, 4, 3, "");
+  faixa(lin++, 36, S_TIT, cfg.titulo || "Relatório");
+  faixa(lin++, 22, S_SUB, "LUBE DISTRIBUIDORA LTDA" + (cfg.subtitulo ? "  ·  " + cfg.subtitulo : "") + "  ·  gerado em " + new Date().toLocaleString("pt-BR"));
+  faixa(lin++, 4, S_FILETE, "");
   lin++;
 
   /* filtros aplicados */
   var F = cfg.filtros || [];
-  faixa(lin++, 18, 5, "FILTROS APLICADOS");
-  if (!F.length) faixa(lin++, null, 4, "Nenhum filtro: todos os títulos em aberto da rotina, todas as filiais");
-  F.forEach(function (f) { faixa(lin++, null, 4, f[0] + ":  " + f[1]); });
+  faixa(lin++, 18, S_SECAO, "FILTROS APLICADOS");
+  if (!F.length) faixa(lin++, null, S_FILTRO, "Nenhum filtro: todos os títulos em aberto da rotina, todas as filiais");
+  F.forEach(function (f) { faixa(lin++, null, S_FILTRO, f[0] + ":  " + f[1]); });
   lin++;
 
   /* totais da rotina em cartões */
   var R = (cfg.resumo || []).filter(function (r) { return r && r[0]; });
   if (R.length && R.length > nC) {
     // poucas colunas para um cartão por total: um total por linha, centralizado
-    faixa(lin++, 18, 5, "TOTAIS");
+    faixa(lin++, 18, S_SECAO, "TOTAIS");
     R.forEach(function (r) {
       var v = r[2] === "moeda" ? Number(r[1]).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : r[2] === "inteiro" ? Number(r[1]).toLocaleString("pt-BR") : r[1];
-      faixa(lin++, 20, 9, r[0] + ":  " + v);
+      faixa(lin++, 20, S_LINHA_TOT, r[0] + ":  " + v);
     });
     lin++;
   } else if (R.length) {
-    faixa(lin++, 18, 5, "TOTAIS");
+    faixa(lin++, 18, S_SECAO, "TOTAIS");
     var nCart = R.length, por = Math.max(1, Math.floor(nC / nCart)), rot = [], val = [], ini = 1;
     R.forEach(function (r, i) {
       var fim = i === nCart - 1 ? nC : Math.min(nC, ini + por - 1);
       if (ini > nC) return;
-      var tipo = r[2] === "moeda" ? 7 : r[2] === "inteiro" ? 8 : 9, v = r[2] === "moeda" || r[2] === "inteiro" ? numerico(r[2], r[1]) : r[1];
+      var fmt = r[2] === "moeda" || r[2] === "inteiro" ? r[2] : null, v = fmt ? numerico(r[2], r[1]) : r[1];
       for (var c = ini; c <= fim; c++) {
-        rot.push(cel(col(c) + lin, 6, c === ini ? String(r[0]).toUpperCase() : ""));
-        val.push(cel(col(c) + (lin + 1), tipo, c === ini ? v : "", c === ini && tipo !== 9 && v != null));
+        var pos = ini === fim ? 0 : c === ini ? 1 : c === fim ? 3 : 2;
+        rot.push(cel(col(c) + lin, sCartao(6, null, pos), c === ini ? String(r[0]).toUpperCase() : ""));
+        val.push(cel(col(c) + (lin + 1), sCartao(7, fmt, pos), c === ini ? v : "", c === ini && fmt && v != null));
       }
-      if (fim > ini) { merges.push(col(ini) + lin + ":" + col(fim) + lin); merges.push(col(ini) + (lin + 1) + ":" + col(fim) + (lin + 1)); }
       ini = fim + 1;
     });
     row(lin, 20, rot); row(lin + 1, 30, val); lin += 3;
@@ -222,7 +235,7 @@ function gerar(cfg, logo) {
 
   /* cabeçalho */
   var lCab = lin;
-  row(lin, 32, C.map(function (c, i) { return cel(col(i + 1) + lin, 10, c.titulo); }));
+  row(lin, 32, C.map(function (c, i) { return cel(col(i + 1) + lin, S_CAB, c.titulo); }));
   lin++;
 
   /* dados */
@@ -241,21 +254,22 @@ function gerar(cfg, logo) {
   });
   var ultDado = lin - 1;
 
-  /* total */
+  /* total: o rótulo centralizado da 1ª coluna até antes da 1ª coluna somada (sem mesclar) */
   if (linhas.length) {
-    var temSoma = C.some(function (c) { return c.somar; });
+    var somada = function (c) { return c.somar && (c.tipo === "moeda" || c.tipo === "decimal" || c.tipo === "inteiro"); };
+    var j0 = C.findIndex(somada); if (j0 < 1) j0 = j0 === 0 ? 1 : C.length;
     row(lin, 24, C.map(function (c, i) {
       var ref = col(i + 1) + lin;
-      if (i === 0) return cel(ref, E_TOT, "TOTAL  ·  " + linhas.length.toLocaleString("pt-BR") + (linhas.length === 1 ? " título" : " títulos"));
-      if (c.somar && (c.tipo === "moeda" || c.tipo === "decimal")) return cel(ref, c.tipo === "moeda" ? E_TOT + 1 : E_TOT + 3, Math.round(soma[i] * 100) / 100, true);
-      if (c.somar && c.tipo === "inteiro") return cel(ref, E_TOT + 2, soma[i], true);
-      return cel(ref, E_TOT, "");
+      if (i === 0) return cel(ref, S_TOT_ROT, "TOTAL  ·  " + linhas.length.toLocaleString("pt-BR") + (linhas.length === 1 ? " título" : " títulos"));
+      if (i < j0) return cel(ref, S_TOT_ROT, "");
+      if (somada(c) && c.tipo !== "inteiro") return cel(ref, sTot(c.tipo), Math.round(soma[i] * 100) / 100, true);
+      if (somada(c)) return cel(ref, sTot("inteiro"), soma[i], true);
+      return cel(ref, sTot(null), "");
     }));
     lin++;
-    void temSoma;
   }
   lin++;
-  faixa(lin, 30, E_RODAPE, cfg.rodape || "Gerado pelo painel Contas a Pagar e Receber · Lube Distribuidora · dado do WinThor, ao vivo pelo AGENTE LUBE");
+  faixa(lin, 30, S_RODAPE, cfg.rodape || "Gerado pelo painel Contas a Pagar e Receber · Lube Distribuidora · dado do WinThor, ao vivo pelo AGENTE LUBE");
 
   /* larguras pelo conteúdo */
   var larg = C.map(function (c, i) {
@@ -278,7 +292,6 @@ function gerar(cfg, logo) {
     '" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A' + (lCab + 1) + '" sqref="A' + (lCab + 1) + '"/></sheetView></sheetViews>' +
     '<sheetFormatPr defaultRowHeight="18" customHeight="1"/><cols>' + larg.join("") + "</cols><sheetData>" + xml.join("") + "</sheetData>" +
     (linhas.length ? '<autoFilter ref="A' + lCab + ":" + col(C.length) + ultDado + '"/>' : "") +
-    '<mergeCells count="' + merges.length + '">' + merges.map(function (m) { return '<mergeCell ref="' + m + '"/>'; }).join("") + "</mergeCells>" +
     '<printOptions horizontalCentered="1"/><pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>' +
     '<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>' +
     (temLogo ? '<drawing r:id="rId1"/>' : "") + "</worksheet>";
